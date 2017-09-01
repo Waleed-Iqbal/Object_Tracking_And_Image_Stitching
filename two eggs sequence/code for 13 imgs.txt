@@ -1,0 +1,87 @@
+clc
+clear all
+
+% for n=1:1:13
+% I = imread(horzcat('T',num2str(n,'%03d'),'.jpg'));
+% I1=I(:,size(I,2)/2-40:end,:); % total 60 columns in common
+% I2=I(:,1:size(I,2)/2+40,:);
+% imwrite(I1,horzcat('a',num2str(n,'%03d'),'.jpg'),'jpg');
+% imwrite(I2,horzcat('b',num2str(n,'%03d'),'.jpg'),'jpg');
+% end
+
+for n=1:1:13
+I01=imread(horzcat('cropped_imgs\a',num2str(n,'%03d'),'.jpg'));
+I02=imread(horzcat('cropped_imgs\b',num2str(n,'%03d'),'.jpg'));
+
+I1=rgb2gray(I01);
+I2=rgb2gray(I02);
+
+% I1_dash = downsample(I1,2);
+% I2_dash = downsample(I2,2);
+
+I1_dash = I1;
+I2_dash = I2;
+
+[m1 n1 d1]=size(I1_dash)
+[m2 n2 d2]=size(I2_dash)
+
+%figure;imshow(I2)
+for i=1:1:360
+I2_dash_rot=imrotate(I2_dash,i);
+
+FI1_dash=fft2(double(I1_dash),m1+m2-1,n1+n2-1);
+FI2_dash_rot=fft2(double(I2_dash_rot),m1+m2-1,n1+n2-1);
+
+
+Q=(FI1_dash.*conj(FI2_dash_rot))./(abs(FI1_dash.*conj(FI2_dash_rot)));
+
+q=ifft2(double(Q),m1+m2-1,n1+n2-1);
+i
+
+[qx qy]=find(q==max(max(q)));
+peak(1,i)=max(max(q));
+end
+
+[peakx theeta_dash]=find(peak==max(peak));
+
+I2_rot=imrotate(I2_dash_rot,theeta_dash);
+%figure; imshow(I1)
+%figure; imshow(I2_rot)
+[r1 c1 dd1] = size(I1);
+[r2 c2 dd2] = size(I2_rot);
+
+F1 = fftshift(fft2(double(I1),r1+r2-1,c1+c2-1));
+F2 = fftshift(fft2(double(I2_rot),r1+r2-1,c1+c2-1));
+
+F = F1.*conj(F2);
+F = F./abs(F);
+
+p = (ifft2(F));
+
+[px py]=find(p==max(max(p)));
+
+if (I1(1,1)==I2_rot(end-px,end-py))
+    img = zeros(r2-px+r1,c2-py+c1);
+    img=cast(img,'uint8');
+    img(1:r2,1:c2,:)=I2_rot;
+    img(r2-px:r2-px+r1-1,c2-py:c2-py+c1-1,:)=I1;
+else
+    img = zeros(px+r2,py+c2);
+    img=cast(img,'uint8');
+    img(1:r1,1:c1,:)=I1;
+    img(px:px+r2-1,py:py+c2-1,:)=I2_rot;
+end
+
+img=cast(img,'uint8');
+ figure;imshow(img);
+saveas(gcf, horzcat('stitched\',num2str(n,'%03d'),'.jpg'))
+end
+
+ for n=1:1:13
+images{n} = imread(horzcat('stitched\',num2str(n,'%03d'),'.jpg'));
+ end
+figure; 
+for n=1:1:4
+pause(0.5);
+imshow(images{n});
+end

@@ -1,0 +1,76 @@
+clc;
+close all;
+screensize=get(0,'ScreenSize');
+car_images=uigetdir('start_path','path for loading car sequence');
+a=imread(horzcat(car_images,'\T.jpg'));
+Original_Image=a;
+a = rgb2gray(a);
+figure('units','normalized','outerposition',[0 0 1 1]);%To mkae the figure full screen
+for n=1:1:91
+   bb = imread(horzcat(car_images,'\T (',num2str(n,'%3d'),').jpg'));
+   dd = bb;
+b = rgb2gray(bb);
+
+
+I1=b; %I2=I;
+I2=uint8(a);
+I1=uint8(I1);
+clear I;
+clear b;
+I=I2-I1;
+
+I = im2bw(I,0.2); % converting image to binary
+% imshow(I);
+% pause;
+%also try to calculate the threshold value
+I = bwareaopen(I,10,8);% to remove a connected component having less than
+                         % a specified number of connected(4,8) pixels
+
+%P = bwlable(I,8);% returns a matrix P, of the same size as O, containing labels for the connected
+                 % objects in O. The variable 8 can have a value of either 4 or 8, where 4 specifies
+                 % it defaults to 8.
+BB=regionprops(I,'Boundingbox');
+BB1=struct2cell(BB);
+BB2=cell2mat(BB1);
+[s1 s2]=size(BB2);
+ mx=0;
+ for k=3:4:s2-1
+     p=BB2(1,k)*BB2(1,k+1);
+     if p>mx & (BB2(1,k)/BB2(1,k+1))<20
+         mx=p;
+         j=k;
+     end
+ end
+ 
+%pause;
+% to save images only:x=figure;
+
+%subplot(1,2,1);imshow(dd,'border','tight','InitialMagnification','fit');
+%title('ORIGINAL','fontsize',22);
+%subplot(1,2,2);
+imshow(bb,'border','tight','InitialMagnification','fit');
+%title('RESULT','fontsize',22);
+
+%set(x,'Position',[0 0 screensize(3) screensize(4)]); to display full screen
+ hold on;
+ rectangle('Position',[BB2(1,j-2),BB2(1,j-1),BB2(1,j),BB2(1,j+1)],'EdgeColor','r','LineWidth',3,'Linestyle','--');
+ movie1(n)=getframe;
+ hold off ; 
+ %to save images only:print(x, '-r80', '-dbitmap',horzcat('E:\Waleed\DIP Project\Tracked images\T (',num2str(n,'%3d'),').jpg'));
+ %pause(0.5); remove comment if you don't want "getframe"
+end
+
+%Displaying as movie
+pause;
+movie(movie1,2);
+
+
+pause;
+figure('units','normalized','outerposition',[0 0 1 1]);
+set(gcf,'Color', 'white')
+text(0.3,0.6,'Thank you !!','fontsize',50,'color','r')
+set(gca,'Color','white');
+set(gca,'XColor','white');
+set(gca,'YColor','white');
+pause(0.5);
+clear all;
